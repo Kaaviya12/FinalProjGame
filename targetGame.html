@@ -24,6 +24,8 @@
             var oldBulletPosY = 0;
             var targetFiles = ["Target.jpg", "Person.jpg"];
             var numTargets = 6;
+            var gunShotMP3;
+            var spaceLaserShotMP3;
 
             function init(){
                 console.log("Hello, welcome to target game!");
@@ -43,6 +45,8 @@
                 }
                 bullet = new Sprite("Bullet.jpg", 30, 15);
                 timer = new Timer();
+                gunShotMP3 = new Sound("GunShot.mp3");
+                spaceLaserShotMP3 = new Sound("SpaceLaserShot.mp3");
                 
 
                 timeElapsed = document.getElementById("timeElapsed");
@@ -119,10 +123,10 @@
                         targetShots += 1;
 
                         if(target[i].name == "Target"){
-                            //Play bullet sound
+                            gunShotMP3.playSound();
                             points += 100;
                         } else if(target[i].name == "Person"){
-                            //Play alien sound
+                            spaceLaserShotMP3.playSound();
                             points += 300;
                         }
                     }
@@ -146,7 +150,7 @@
             function resume(){
                 if(timer.pauseClicked == true){
                     scene.resume();
-                    intId = setInterval(updateBackground, 10000);
+                    intId = setInterval(updateBackground, 30000);
                     timer.resume();
                 }
             }

@@ -318,6 +318,22 @@ function Timer(){
     }
 }
 
+
+function Sound(src){
+    this.sound = document.createElement("audio");
+    this.sound.src = src;
+    this.sound.style.display = "none";
+    this.sound.setAttribute("preload", "auto");
+    this.sound.setAttribute("controls", "none");
+    document.body.appendChild(this.sound);
+
+    this.playSound = function(){
+        this.sound.play();
+    }
+}
+
+
+
 //Keyboard key codes
 Key_A = 65; Key_B = 66; Key_C = 67; Key_D = 68; Key_E = 69; Key_F = 70; 
 Key_G = 71; Key_H = 72; Key_I = 73; Key_J = 74; Key_K = 75; Key_L = 76; 
