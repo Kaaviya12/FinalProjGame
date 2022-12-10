@@ -1,0 +1,214 @@
+<!--
+    targetGame.html
+    This file contains the sample game to show how the game engine from gameEngine.js works
+-->
+
+<!DOCTYPE html>
+<html lang="en-US">
+    <head>
+        <meta charset="UTF-8">
+        <title>Target Game</title>
+        <script type="text/javascript" src="gameEngine.js"></script>
+        <script type="text/javascript">
+            var scene;
+            var targetShots = 0;
+            var points = 0;
+            var background = ["PlanetBG.jpg", "AlienBG.jpg", "WarBG.jpg"];
+            var nextBackground = 0;
+            var maxTime = 120;
+            var gameInstructions = "Move the up, down, left, and right arrow keys to aim your weapon. " +
+                                   "The center dot from the aim must hit anywhere on the target. " +
+                                   "Each target is worth 100 points. The alien body target is worth 300 points! <br>" +
+                                   "Shoot as many targets as you can to earn points before the time reaches: " + maxTime + " seconds";
+            var oldBulletPosX = 0;
+            var oldBulletPosY = 0;
+            var targetFiles = ["Target.jpg", "Person.jpg"];
+            var numTargets = 6;
+
+            function init(){
+                console.log("Hello, welcome to target game!");
+                scene = new Scene();
+                aim = new Sprite("Aim.jpg", 50, 50);
+                target = new Array();
+                j = 0;
+                for(i = 0; i < numTargets/2; i++){
+                    target.push(new Sprite(targetFiles[0], 80, 80));
+                    target[j].setName("Target");
+                    shiftTarget(j);
+                    j += 1;
+                    target.push(new Sprite(targetFiles[1], 60, 60));
+                    target[j].setName("Person");
+                    shiftTarget(j);
+                    j += 1;
+                }
+                bullet = new Sprite("Bullet.jpg", 30, 15);
+                timer = new Timer();
+                
+
+                timeElapsed = document.getElementById("timeElapsed");
+                resumeButton = document.getElementById("resume");
+
+                scene.setSize(1400, 700);
+                scene.setBorder(5, "solid", "red");
+                scene.setBackgroundColor("purple");
+                scene.setBackgroundImage(background[nextBackground]);
+                nextBackground += 1;
+
+                aim.setdx(0);
+                aim.setx(scene.width / 2);  //Set aim at the center of the scene/canvas
+                aim.sety(scene.height / 2);
+
+                bullet.setdx(0);
+                bullet.hide();
+
+                
+
+                intId = setInterval(updateBackground, 30000);
+                timer.start();
+                scene.start();
+            }
+
+            function update(){
+                timeElapsed.innerHTML = gameInstructions + "<br><br>" +
+                                        "Time: " + timer.getElapsedTime() + "<br> Target Shots Fired: " + targetShots +
+                                        "<br> Points Earned: " + points;
+                scene.clear();
+                aim.checkKeys();
+                checkShoot();
+                for(i = 0; i < numTargets; i++){
+                    target[i].update();
+                }
+                aim.update();
+                bullet.update();
+                
+                if(timer.getElapsedTime() >= maxTime){
+                    stop();
+                    resumeButton.disabled = true;
+                }
+            }
+
+            function shiftTarget(i){
+                rand1 = (Math.random() * 1000);
+                rand2 = (Math.random() * 1000);
+                target[i].setx(Math.round(rand1));
+                target[i].sety(Math.round(rand2));
+
+                newdx = (Math.random() - 0.5) * 20;
+                newdy = (Math.random() - 0.5) * 20;
+
+                target[i].setdx(newdx);
+                target[i].setdy(newdy);
+            }
+
+            function checkShoot(){
+                if(aim.spacePressed){
+                    aim.spacePressed = false;
+                    bullet.show();
+                    oldBulletPosX = aim.spacePressedPosX;
+                    oldBulletPosY = aim.spacePressedPosY;
+                    bullet.setx(oldBulletPosX);
+                    bullet.sety(oldBulletPosY);
+                    checkCollision();
+                }
+            }
+
+            function checkCollision(){
+                for(i = 0; i < numTargets; i++){
+                    if(bullet.hasCollided(target[i])){
+                        shiftTarget(i);
+                        targetShots += 1;
+
+                        if(target[i].name == "Target"){
+                            //Play bullet sound
+                            points += 100;
+                        } else if(target[i].name == "Person"){
+                            //Play alien sound
+                            points += 300;
+                        }
+                    }
+                }
+            }
+
+            function updateBackground(){
+                scene.setBackgroundImage(background[nextBackground]);
+                nextBackground += 1;
+                if(nextBackground > 2){
+                    nextBackground = 0;
+                }
+            }
+
+            function stop(){
+                scene.stop();
+                clearInterval(intId);
+                timer.pause();
+            }
+            
+            function resume(){
+                if(timer.pauseClicked == true){
+                    scene.resume();
+                    intId = setInterval(updateBackground, 10000);
+                    timer.resume();
+                }
+            }
+
+            function restart(){
+                document.location.href = "";
+            }
+
+            function wrapAct(){
+                aim.setBoundAction("WRAP");
+                setTargetsAct("WRAP");
+            }
+
+            function bounceAct(){
+                aim.setBoundAction("BOUNCE");
+                setTargetsAct("BOUNCE");
+            }
+
+            function stopAct(){
+                aim.setBoundAction("STOP");
+                setTargetsAct("STOP");
+            }
+
+            function setTargetsAct(act){
+                for(i = 0; i < numTargets; i++){
+                    target[i].setBoundAction(act);
+                }
+            }
+
+        </script>
+    </head>
+    <body onload="init()">
+        <p id="timeElapsed"></p>
+        
+        <button type="button"
+                id="stop"
+                onclick="stop()">Stop</button>
+
+        <button type="button"
+                id="resume"
+                onclick="resume()">Resume</button>
+
+        <button type="button"
+                id="restart"
+                onclick="restart()">Restart</button>
+
+        <button type="button"
+                id="wrapAct"
+                onclick="wrapAct()">Wrap Action</button>
+
+        <button type="button"
+                id="bounceAct"
+                onclick="bounceAct()">Bounce Action</button>
+
+        <button type="button"
+                id="stopAct"
+                onclick="stopAct()">Stop Action</button>
+        <br>       
+        <canvas id="canvas"
+                width="1200"
+                height="600">
+                <p>Your browser does not support the canvas tag</p>
+        </canvas>
+    </body>
+</html>
