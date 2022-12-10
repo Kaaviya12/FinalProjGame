@@ -13,13 +13,15 @@
             var scene;
             var targetShots = 0;
             var points = 0;
+            var pointsGoal = 3000;
             var background = ["PlanetBG.jpg", "AlienBG.jpg", "WarBG.jpg"];
             var nextBackground = 0;
             var maxTime = 120;
             var gameInstructions = "Move the up, down, left, and right arrow keys to aim your weapon. " +
                                    "The center dot from the aim must hit anywhere on the target. " +
                                    "Each target is worth 100 points. The alien body target is worth 300 points! <br>" +
-                                   "Shoot as many targets as you can to earn points before the time reaches: " + maxTime + " seconds";
+                                   "Shoot as many targets as you can to earn points before the time reaches: " + maxTime + " seconds. " +
+                                   "Reach " + pointsGoal +"+ points to win this game!";
             var oldBulletPosX = 0;
             var oldBulletPosY = 0;
             var targetFiles = ["Target.jpg", "Person.jpg"];
@@ -129,6 +131,10 @@
                             spaceLaserShotMP3.playSound();
                             points += 300;
                         }
+
+                        if(points >= pointsGoal){
+                            stop();
+                        }
                     }
                 }
             }
@@ -141,10 +147,53 @@
                 }
             }
 
+            function youWon(){
+                con = scene.canvas.getContext('2d');
+                text = "Congratulations!";
+                //Measure the text width and use that px size to dynamically set the gradient ending position
+                textSize = con.measureText(text).width;
+                
+                //Gradient starts at the same x-coordinate where we will place the text, which is dynamic since the canvas width is used instead of a specific point
+                //Gradient ends when text ending is reached
+                //(start x, start y, end x, end y) here the gradient will progress horizontally
+                gradient = con.createLinearGradient(scene.canvas.width/4, 0, scene.canvas.width * 3/4, 0);
+                gradient.addColorStop(0, "black");
+                gradient.addColorStop(0.3, "blue");
+                gradient.addColorStop(0.8, "purple");
+                gradient.addColorStop(1, "#ff3399"); //Pink shade = rgb(255, 51, 153)
+                con.fillStyle = gradient;
+                con.font = "100px Arial";
+                con.fillText(text, scene.canvas.width/4, scene.canvas.height/2);
+            }
+
+            function youLost(){
+                con = scene.canvas.getContext('2d');
+                text = "Sorry...You Lost!";
+                //Measure the text width and use that px size to dynamically set the gradient ending position
+                textSize = con.measureText(text).width;
+                
+                //Gradient starts at the same x-coordinate where we will place the text, which is dynamic since the canvas width is used instead of a specific point
+                //Gradient ends when text ending is reached
+                //(start x, start y, end x, end y) here the gradient will progress horizontally
+                gradient = con.createLinearGradient(scene.canvas.width/4, 0, scene.canvas.width * 3/4, 0);
+                gradient.addColorStop(0, "black");
+                gradient.addColorStop(0.3, "blue");
+                gradient.addColorStop(0.8, "purple");
+                gradient.addColorStop(1, "#ff3399"); //Pink shade = rgb(255, 51, 153)
+                con.fillStyle = gradient;
+                con.font = "100px Arial";
+                con.fillText(text, scene.canvas.width/4, scene.canvas.height/2);
+            }
+
             function stop(){
                 scene.stop();
                 clearInterval(intId);
                 timer.pause();
+                if(points >= pointsGoal){
+                    youWon();
+                } else if(timer.getElapsedTime() >= maxTime) {
+                    youLost();
+                }
             }
             
             function resume(){
