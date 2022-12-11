@@ -34,6 +34,8 @@
 
             function init(){
                 console.log("Hello, welcome to target game!");
+                window.addEventListener("keydown", preventKeyboardScroll);
+
                 scene = new Scene();
                 aim = new Sprite("Aim.jpg", 50, 50);
                 target = new Array();
@@ -75,6 +77,14 @@
                 intId = setInterval(updateBackground, 30000);
                 timer.start();
                 scene.start();
+            }
+
+            //This function prevents the page from scrolling when any of the keys are pressed
+            function preventKeyboardScroll(event){
+                keyCodes = ["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"];
+                if(keyCodes.indexOf(event.code) > -1) {
+                    event.preventDefault();
+                }
             }
 
             function update(){
