@@ -1,0 +1,290 @@
+<!--
+    targetGame.html
+    This file contains a game which utilizes the game engine from gameEngine.js
+    The purpose of this game is to create an interesting game for the user to play by shooting moving targets to earn points
+    and reach the end goal. This game will keep the user engaged and will urge the user to keep playing.
+-->
+
+<!DOCTYPE html>
+<html lang="en-US">
+    <head>
+        <meta charset="UTF-8">
+        <title>Target Game</title>
+        <script type="text/javascript" src="gameEngine.js"></script>
+        <script type="text/javascript">
+            var scene;
+            var targetShots = 0;
+            var points = 0;
+            var pointsGoal = 5000;
+            var background = ["PlanetBG.jpg", "AlienBG.jpg", "WarBG.jpg"];
+            var nextBackground = 0;
+            var maxTime = 120;
+            var gameInstructions = "Move the up, down, left, and right arrow keys to aim your weapon. " +
+                                   "Press the space bar to shoot. " +
+                                   "The center dot from the aim must hit anywhere on the target. " +
+                                   "Each target is worth 100 points. The alien body target is worth 300 points! <br>" +
+                                   "Shoot as many targets as you can to earn points before the time reaches: " + maxTime + " seconds. " +
+                                   "Reach " + pointsGoal +"+ points to win this game!";
+            var oldBulletPosX = 0;
+            var oldBulletPosY = 0;
+            var targetFiles = ["Target.jpg", "Person.jpg"];
+            var numTargets = 6;
+            var gunShotMP3;
+            var spaceLaserShotMP3;
+
+            function init(){
+                console.log("Hello, welcome to target game!");
+                window.addEventListener("keydown", preventKeyboardScroll);
+
+                scene = new Scene();
+                aim = new Sprite("Aim.jpg", 50, 50);
+                target = new Array();
+                j = 0;
+                for(i = 0; i < numTargets/2; i++){
+                    target.push(new Sprite(targetFiles[0], 80, 80));
+                    target[j].setName("Target");
+                    shiftTarget(j);
+                    j += 1;
+                    target.push(new Sprite(targetFiles[1], 60, 60));
+                    target[j].setName("Person");
+                    shiftTarget(j);
+                    j += 1;
+                }
+                bullet = new Sprite("Bullet.jpg", 30, 15);
+                timer = new Timer();
+                gunShotMP3 = new Sound("GunShot.mp3");
+                spaceLaserShotMP3 = new Sound("SpaceLaserShot.mp3");
+                
+
+                timeElapsed = document.getElementById("timeElapsed");
+                resumeButton = document.getElementById("resume");
+
+                scene.setSize(1400, 700);
+                scene.setBorder(5, "solid", "red");
+                scene.setBackgroundColor("purple");
+                scene.setBackgroundImage(background[nextBackground]);
+                nextBackground += 1;
+
+                aim.setdx(0);
+                aim.setx(scene.width / 2);  //Set aim at the center of the scene/canvas
+                aim.sety(scene.height / 2);
+
+                bullet.setdx(0);
+                bullet.hide();
+
+                
+
+                intId = setInterval(updateBackground, 30000);
+                timer.start();
+                scene.start();
+            }
+
+            //This function prevents the page from scrolling when any of the keys are pressed
+            function preventKeyboardScroll(event){
+                keyCodes = ["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"];
+                if(keyCodes.indexOf(event.code) > -1) {
+                    event.preventDefault();
+                }
+            }
+
+            function update(){
+                updateScore();
+                scene.clear();
+                aim.checkKeys();
+                checkShoot();
+                for(i = 0; i < numTargets; i++){
+                    target[i].update();
+                }
+                aim.update();
+                bullet.update();
+                
+                if(timer.getElapsedTime() >= maxTime){
+                    stop();
+                    resumeButton.disabled = true;
+                }
+            }
+
+            function shiftTarget(i){
+                rand1 = (Math.random() * 1000);
+                rand2 = (Math.random() * 1000);
+                target[i].setx(Math.round(rand1));
+                target[i].sety(Math.round(rand2));
+
+                newdx = (Math.random() - 0.5) * 20;
+                newdy = (Math.random() - 0.5) * 20;
+
+                target[i].setdx(newdx);
+                target[i].setdy(newdy);
+            }
+
+            function checkShoot(){
+                if(aim.spacePressed){
+                    aim.spacePressed = false;
+                    bullet.show();
+                    oldBulletPosX = aim.spacePressedPosX;
+                    oldBulletPosY = aim.spacePressedPosY;
+                    bullet.setx(oldBulletPosX);
+                    bullet.sety(oldBulletPosY);
+                    checkCollision();
+                }
+            }
+
+            function checkCollision(){
+                for(i = 0; i < numTargets; i++){
+                    if(bullet.hasCollided(target[i])){
+                        shiftTarget(i);
+                        targetShots += 1;
+
+                        if(target[i].name == "Target"){
+                            gunShotMP3.playSound();
+                            points += 100;
+                        } else if(target[i].name == "Person"){
+                            spaceLaserShotMP3.playSound();
+                            points += 300;
+                        }
+
+                        if(points >= pointsGoal){
+                            stop();
+                            resumeButton.disabled = true;
+                        }
+                    }
+                }
+            }
+
+            function updateBackground(){
+                scene.setBackgroundImage(background[nextBackground]);
+                nextBackground += 1;
+                if(nextBackground > 2){
+                    nextBackground = 0;
+                }
+            }
+
+            function youWon(){
+                con = scene.canvas.getContext('2d');
+                text = "Congratulations!";
+                //Measure the text width and use that px size to dynamically set the gradient ending position
+                textSize = con.measureText(text).width;
+                
+                //Gradient starts at the same x-coordinate where we will place the text, which is dynamic since the canvas width is used instead of a specific point
+                //Gradient ends when text ending is reached
+                //(start x, start y, end x, end y) here the gradient will progress horizontally
+                gradient = con.createLinearGradient(scene.canvas.width/4, 0, scene.canvas.width * 3/4, 0);
+                gradient.addColorStop(0, "black");
+                gradient.addColorStop(0.3, "blue");
+                gradient.addColorStop(0.8, "purple");
+                gradient.addColorStop(1, "#ff3399"); //Pink shade = rgb(255, 51, 153)
+                con.fillStyle = gradient;
+                con.font = "100px Arial";
+                con.fillText(text, scene.canvas.width/4, scene.canvas.height/2);
+            }
+
+            function youLost(){
+                con = scene.canvas.getContext('2d');
+                text = "Sorry...You Lost!";
+                //Measure the text width and use that px size to dynamically set the gradient ending position
+                textSize = con.measureText(text).width;
+                
+                //Gradient starts at the same x-coordinate where we will place the text, which is dynamic since the canvas width is used instead of a specific point
+                //Gradient ends when text ending is reached
+                //(start x, start y, end x, end y) here the gradient will progress horizontally
+                gradient = con.createLinearGradient(scene.canvas.width/4, 0, scene.canvas.width * 3/4, 0);
+                gradient.addColorStop(0, "black");
+                gradient.addColorStop(0.3, "blue");
+                gradient.addColorStop(0.8, "purple");
+                gradient.addColorStop(1, "#ff3399"); //Pink shade = rgb(255, 51, 153)
+                con.fillStyle = gradient;
+                con.font = "100px Arial";
+                con.fillText(text, scene.canvas.width/4, scene.canvas.height/2);
+            }
+
+            function stop(){
+                if(timer.pauseClicked == false){
+                    scene.stop();
+                    clearInterval(intId);
+                    timer.pause();
+                    //Update the points after the game stopped, because when we reach the goal the final set of points
+                    //does not show. So we update the points again at the end of the game
+                    updateScore();
+                    if(points >= pointsGoal){
+                        youWon();
+                    } else if(timer.getElapsedTime() >= maxTime) {
+                        youLost();
+                    }
+                }
+            }
+
+            function updateScore(){
+                timeElapsed.innerHTML = gameInstructions + "<br><br>" +
+                                        "Time: " + timer.getElapsedTime() + "<br> Target Shots Fired: " + targetShots +
+                                        "<br> Points Earned: " + points;
+            }
+            
+            function resume(){
+                if(timer.pauseClicked == true){
+                    scene.resume();
+                    intId = setInterval(updateBackground, 30000);
+                    timer.resume();
+                }
+            }
+
+            function restart(){
+                document.location.href = "";
+            }
+
+            function wrapAct(){
+                aim.setBoundAction("WRAP");
+                setTargetsAct("WRAP");
+            }
+
+            function bounceAct(){
+                aim.setBoundAction("BOUNCE");
+                setTargetsAct("BOUNCE");
+            }
+
+            function stopAct(){
+                aim.setBoundAction("STOP");
+                setTargetsAct("STOP");
+            }
+
+            function setTargetsAct(act){
+                for(i = 0; i < numTargets; i++){
+                    target[i].setBoundAction(act);
+                }
+            }
+
+        </script>
+    </head>
+    <body onload="init()">
+        <p id="timeElapsed"></p>
+        
+        <button type="button"
+                id="stop"
+                onclick="stop()">Stop</button>
+
+        <button type="button"
+                id="resume"
+                onclick="resume()">Resume</button>
+
+        <button type="button"
+                id="restart"
+                onclick="restart()">Restart</button>
+
+        <button type="button"
+                id="wrapAct"
+                onclick="wrapAct()">Wrap Action</button>
+
+        <button type="button"
+                id="bounceAct"
+                onclick="bounceAct()">Bounce Action</button>
+
+        <button type="button"
+                id="stopAct"
+                onclick="stopAct()">Stop Action</button>
+        <br>       
+        <canvas id="canvas"
+                width="1200"
+                height="600">
+                <p>Your browser does not support the canvas tag</p>
+        </canvas>
+    </body>
+</html>
