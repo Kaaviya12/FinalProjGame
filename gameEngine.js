@@ -1,5 +1,5 @@
 /*gameEngine.js
-  This file contains the Scene, Sprite, and Timer objects
+  This file contains the Scene, Sprite, Timer, and Sound objects
 */
 
 var keysDown = [];
